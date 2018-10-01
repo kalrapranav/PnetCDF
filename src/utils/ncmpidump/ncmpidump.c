@@ -23,6 +23,10 @@
 #include "dumplib.h"
 #include "vardata.h"
 
+#ifdef BUILD_DRIVER_ADIOS
+#include "adios_read.h"
+#endif
+
 static void usage(void);
 static char* name_path(const char* path);
 static const char* type_name(nc_type  type);
@@ -672,6 +676,7 @@ enum FILE_KIND {
     CDF2,
     CDF1,
     HDF5,
+    BP,
     UNKNOWN
 };
 
@@ -707,6 +712,9 @@ enum FILE_KIND check_file_signature(char *path)
              if (signature[3] == 5)  return CDF5;
         else if (signature[3] == 2)  return CDF2;
         else if (signature[3] == 1)  return CDF1;
+    }
+    else{
+        return BP;
     }
 
     return UNKNOWN; /* unknown format */

@@ -32,7 +32,8 @@ C_SRCS = ncadio_attr.c \
          ncadio_dim.c \
          ncadio_driver.c \
          ncadio_file.c \
-         ncadio_var.c
+         ncadio_var.c \
+         ncadio_misc.c
 
 $(M4_SRCS:.m4=.c): Makefile
 

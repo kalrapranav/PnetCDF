@@ -45,7 +45,7 @@ nc_type ncadio_to_nc_type(enum ADIOS_DATATYPES atype){
         case adios_unsigned_integer:
             return NC_UINT;
         case adios_long:
-            return NC_LINT64;
+            return NC_INT64;
         case adios_unsigned_long:
             return NC_UINT64;
         case adios_real:

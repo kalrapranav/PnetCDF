@@ -65,6 +65,11 @@ ncadio_inq_dim(void       *ncdp,
     int i;
     NC_ad *ncadp = (NC_ad*)ncdp;
 
+    if (name != NULL){
+        // ADIOS dim has no name
+        sprintf(name, "%d", dimid);
+    }
+
     /* Artificial dimid 
      * Assume that every variable use their own unique dim
      */
@@ -77,11 +82,6 @@ ncadio_inq_dim(void       *ncdp,
 
     if (i >= ncadp->fp->nvars || dimid < 0){
         DEBUG_RETURN_ERROR(NC_EINVAL);
-    }
-
-    if (name != NULL){
-        // ADIOS dim has no name
-        *name = '\0';
     }
 
     if (sizep != NULL){

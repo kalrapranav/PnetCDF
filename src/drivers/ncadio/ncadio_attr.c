@@ -95,7 +95,7 @@ ncadio_inq_att(void       *ncdp,
     int err;
     NC_ad *ncadp = (NC_ad*)ncdp;
     enum ADIOS_DATATYPES atype;
-    int  asize;
+    int  asize, tsize;
     void *adata;
     
     err = adios_get_attr(ncadp->fp, name, &atype, &asize, &adata);
@@ -104,12 +104,19 @@ ncadio_inq_att(void       *ncdp,
         return err;
     }
 
+    tsize = adios_type_size(atype, adata);
+
     if (datatypep != NULL){
         *datatypep = ncadio_to_nc_type(atype);
     }
 
     if (lenp != NULL){
-        *lenp = (MPI_Offset)asize;
+        if (atype == adios_string){
+            *lenp = (MPI_Offset)asize;
+        }
+        else{
+            *lenp = (MPI_Offset)asize / tsize;
+        }
     }
 
     return NC_NOERR;

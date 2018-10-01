@@ -144,6 +144,11 @@ ncadio_close(void *ncdp)
 
     if (ncadp == NULL) DEBUG_RETURN_ERROR(NC_EBADID)
 
+    err = adios_read_close(ncadp->fp);
+    if (err != 0){
+        DEBUG_RETURN_ERROR(NC_EADIOS)
+    }
+
     NCI_Free(ncadp->ndims);
     NCI_Free(ncadp->path);
     NCI_Free(ncadp);

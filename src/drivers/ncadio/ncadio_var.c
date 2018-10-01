@@ -53,6 +53,7 @@
 #include <pnc_debug.h>
 #include <common.h>
 #include <ncadio_driver.h>
+#include <string.h>
 
 int
 ncadio_def_var(void       *ncdp,
@@ -130,20 +131,21 @@ ncadio_inq_var(void       *ncdp,
         *nattsp = 0;
     }
 
-    /* Not supported by adios */
-    /*
+    if (name != NULL){
+        strcpy(name, ncadp->fp->var_namelist[varid]);
+    }
+
+    /* Not supported by adios, set to 0 */
     if (offsetp != NULL){
         *offsetp = 0;
     }
-
     if (no_fillp != NULL){
         *no_fillp = 0;
     }
-
     if (fill_valuep != NULL){
-        *fill_valuep = 0;
+        //*fill_valuep = 0;
     }
-    */
+
 
     return NC_NOERR;
 }
