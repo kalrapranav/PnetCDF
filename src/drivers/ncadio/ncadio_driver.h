@@ -22,6 +22,9 @@ struct NC_ad {
     int              *ndims;        /* Number of dims in each var */
 };
 
+extern int 
+ncadioi_convert(void *inbuf, void *outbuf, MPI_Datatype intype, MPI_Datatype outtype, int N);
+
 extern nc_type 
 ncadio_to_nc_type(enum ADIOS_DATATYPES atype);
 

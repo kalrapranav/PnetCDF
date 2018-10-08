@@ -62,3 +62,36 @@ nc_type ncadio_to_nc_type(enum ADIOS_DATATYPES atype){
 
     return NC_NAT;
 }
+
+MPI_Datatype ncadio_to_mpi_type(enum ADIOS_DATATYPES atype){
+    switch (atype) {
+        case adios_unsigned_byte:
+            return MPI_BYTE;
+        case adios_byte:
+            return MPI_BYTE;
+        case adios_short:
+            return MPI_SHORT;
+        case adios_unsigned_short:
+            return MPI_UNSIGNED_SHORT;
+        case adios_integer:
+            return MPI_INT;
+        case adios_unsigned_integer:
+            return MPI_UNSIGNED;
+        case adios_long:
+            return MPI_LONG_LONG ;
+        case adios_unsigned_long:
+            return MPI_UNSIGNED_LONG_LONG ;
+        case adios_real:
+            return MPI_FLOAT;
+        case adios_double:
+            return MPI_DOUBLE;
+        case adios_long_double:
+            return MPI_DOUBLE;
+        case adios_string:
+            return MPI_CHAR;
+        case adios_string_array:
+            return MPI_CHAR;
+    }
+
+    return NC_NAT;
+}

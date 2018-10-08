@@ -24,7 +24,7 @@ if ENABLE_ERANGE_FILL
 M4FLAGS += -DERANGE_FILL
 endif
 
-M4_SRCS =
+M4_SRCS = ncadio_convert.m4
 
 H_SRCS = ncadio_driver.h
 

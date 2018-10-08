@@ -180,13 +180,37 @@ ncadio_get_var(void             *ncdp,
     NC_ad *ncadp = (NC_ad*)ncdp;
     ADIOS_VARINFO * v;
     ADIOS_SELECTION *sel;
+    MPI_Datatype    vtype;
+    size_t esize, ecnt;
+    void *xbuf;
 
     v = adios_inq_var_byid(ncadp->fp, varid);
     //adios_inq_var_stat (f, v, 0, 0);
 
+    vtype = ncadio_to_mpi_type(v->type);
+    if (vtype == buftype){
+        xbuf = buf;
+    }
+    else{
+        int i;
+
+        esize = (size_t)adios_type_size(v->type, NULL);
+        ecnt = 1;
+        for(i = 0; i < v->ndim; i++){
+            ecnt *= (size_t)count[i];
+        }
+
+        xbuf = NCI_Malloc(esize * ecnt);
+    }
+
     sel = adios_selection_boundingbox (v->ndim, start, count);
-    adios_schedule_read_byid (ncadp->fp, sel, varid, v->nsteps - 1, 1, buf);
+    adios_schedule_read_byid (ncadp->fp, sel, varid, v->nsteps - 1, 1, xbuf);
     adios_perform_reads (ncadp->fp, 1);
+
+    if (vtype != buftype){
+        ncadioi_convert(xbuf, buf, vtype, buftype, (int)ecnt);
+        NCI_Free(xbuf);
+    }
 
     return NC_NOERR;
 }
