@@ -63,6 +63,8 @@ struct NC_ad {
     ADIOS_FILE          *fp;        /* ADIOS file pointer */
     int              *ndims;        /* Number of dims in each var */
     int                rank;
+    MPI_Offset         nrec;        // Number of records in unlimited dimension
+    int              recdim;        // ID of unlimited dimension
     NC_ad_var_list     vars;
     NC_ad_att_list     atts;
     NC_ad_dim_list     dims;
@@ -70,6 +72,9 @@ struct NC_ad {
 
 extern int 
 ncadiosi_parse_header (NC_ad *ncid);
+
+extern int 
+ncadiosi_parse_rec_dim(NC_ad *ncadp);
 
 extern int 
 ncadiosi_var_list_init(NC_ad_var_list *list);
