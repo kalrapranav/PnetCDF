@@ -15,7 +15,7 @@ PnetCDF requires a ADIOS library that is built with parallel I/O support.
     gzip -dc parallel-netcdf-1.11.0.tar.gz | tar -xf -
     cd parallel-netcdf-1.11.0
     ./configure --prefix=/PnetCDF/install/path \
-                --enable-adioss \
+                --enable-adios \
                 --with-adios=/ADIOS/install/path
     ```
 
