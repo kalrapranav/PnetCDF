@@ -114,7 +114,7 @@ pnetcdf_check_mem_usage(MPI_Comm comm)
             printf("heap memory allocated by PnetCDF internally has %lld bytes yet to be freed\n",
                    sum_size);
     }
-    else {
+    else if (err != NC_ENOTENABLED) {
         printf("Error at %s:%d: %s\n", __FILE__,__LINE__,ncmpi_strerror(err));
         nerrs++;
     }
@@ -130,6 +130,7 @@ typedef struct {
 } thread_arg;
 
 /*----< thread_func() >------------------------------------------------------*/
+static
 void* thread_func(void *arg)
 {
     char filename[256];
@@ -258,7 +259,8 @@ void* thread_func(void *arg)
     /* return number of errors encountered */
     ret = (int*)malloc(sizeof(int));
     *ret = nerrs;
-    pthread_exit(ret);
+
+    return ret; /* same as pthread_exit(ret); */
 }
 
 /*----< main() >-------------------------------------------------------------*/

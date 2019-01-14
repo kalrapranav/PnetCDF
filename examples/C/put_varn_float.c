@@ -84,7 +84,7 @@ pnetcdf_check_mem_usage(MPI_Comm comm)
             printf("heap memory allocated by PnetCDF internally has %lld bytes yet to be freed\n",
                    sum_size);
     }
-    else {
+    else if (err != NC_ENOTENABLED) {
         printf("Error at %s:%d: %s\n", __FILE__,__LINE__,ncmpi_strerror(err));
         nerrs++;
     }
@@ -134,6 +134,10 @@ int main(int argc, char** argv)
     ERR
     err = ncmpi_def_var(ncid, "var", NC_FLOAT, NDIMS, dimid, &varid);
     ERR
+    if (nprocs < 4) { /* need 4 processes to fill the variables */
+        err = ncmpi_set_fill(ncid, NC_FILL, NULL);
+        ERR
+    }
     err = ncmpi_enddef(ncid);
     ERR
 
@@ -225,7 +229,7 @@ int main(int argc, char** argv)
 
     /* allocate I/O buffer and initialize its contents */
     buffer = (float*) malloc(num_reqs * sizeof(float));
-    for (i=0; i<num_reqs; i++) buffer[i] =  (float)rank;
+    for (i=0; i<num_reqs; i++) buffer[i] = (float)rank;
 
     /* set the buffer pointers to different offsets to the I/O buffer */
     err = ncmpi_put_varn_float_all(ncid, varid, num_reqs, starts, NULL, buffer);

@@ -83,7 +83,7 @@ pnetcdf_check_mem_usage(MPI_Comm comm)
             printf("heap memory allocated by PnetCDF internally has %lld bytes yet to be freed\n",
                    sum_size);
     }
-    else {
+    else if (err != NC_ENOTENABLED) {
         printf("Error at %s:%d: %s\n", __FILE__,__LINE__,ncmpi_strerror(err));
         nerrs++;
     }
@@ -118,6 +118,7 @@ void print_info(MPI_Info *info_used)
 int main(int argc, char **argv)
 {
     extern int optind;
+    extern char *optarg;
     int i, j, err, nerrs=0;
     int nprocs, len=0, *buf[NUM_VARS], bufsize, rank;
     int gsizes[NDIMS], psizes[NDIMS];

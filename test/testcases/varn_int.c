@@ -135,8 +135,18 @@ int main(int argc, char** argv)
     CHECK_ERR
     err = ncmpi_def_var(ncid, "rec_var", NC_INT, NDIMS, dimid, &varid[1]);
     CHECK_ERR
+    if (nprocs < 4) { /* need 4 processes to fill the variables */
+        err = ncmpi_set_fill(ncid, NC_FILL, NULL);
+        CHECK_ERR
+    }
     err = ncmpi_enddef(ncid);
     CHECK_ERR
+
+    if (nprocs < 4) { /* need 4 processes to fill the variables */
+        for (i=0; i<4; i++) { /* total 4 records */
+            err = ncmpi_fill_var_rec(ncid, varid[1], i); CHECK_ERR
+        }
+    }
 
     /* pick arbitrary numbers of requests for 4 processes */
     num_reqs = 0;
@@ -145,13 +155,15 @@ int main(int argc, char** argv)
     else if (rank == 2) num_reqs = 5;
     else if (rank == 3) num_reqs = 4;
 
-    starts    = (MPI_Offset**) malloc(num_reqs *        sizeof(MPI_Offset*));
-    counts    = (MPI_Offset**) malloc(num_reqs *        sizeof(MPI_Offset*));
-    starts[0] = (MPI_Offset*)  calloc(num_reqs * NDIMS, sizeof(MPI_Offset));
-    counts[0] = (MPI_Offset*)  calloc(num_reqs * NDIMS, sizeof(MPI_Offset));
-    for (i=1; i<num_reqs; i++) {
-        starts[i] = starts[i-1] + NDIMS;
-        counts[i] = counts[i-1] + NDIMS;
+    if (num_reqs > 0) {
+        starts    = (MPI_Offset**) malloc(num_reqs *        sizeof(MPI_Offset*));
+        counts    = (MPI_Offset**) malloc(num_reqs *        sizeof(MPI_Offset*));
+        starts[0] = (MPI_Offset*)  calloc(num_reqs * NDIMS, sizeof(MPI_Offset));
+        counts[0] = (MPI_Offset*)  calloc(num_reqs * NDIMS, sizeof(MPI_Offset));
+        for (i=1; i<num_reqs; i++) {
+            starts[i] = starts[i-1] + NDIMS;
+            counts[i] = counts[i-1] + NDIMS;
+        }
     }
 
     /* assign arbitrary starts and counts */
@@ -309,10 +321,12 @@ int main(int argc, char** argv)
 
     free(buffer);
     free(r_buffer);
-    free(starts[0]);
-    free(counts[0]);
-    free(starts);
-    free(counts);
+    if (num_reqs > 0) {
+        free(starts[0]);
+        free(counts[0]);
+        free(starts);
+        free(counts);
+    }
 
     /* check if PnetCDF freed all internal malloc */
     MPI_Offset malloc_size, sum_size;
