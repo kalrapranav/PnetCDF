@@ -106,6 +106,7 @@ different.
 * PnetCDF current does not recognize record dimension. Variable with record dimension can 
   still be read, but PnetCDF will not return information regarding number of records.
 * Subfiled BP file is not supported. 
+* C memory layout (row major) is always assumed.
 
 Copyright (C) 2018, Northwestern University and Argonne National Laboratory
 
