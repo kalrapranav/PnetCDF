@@ -1,12 +1,20 @@
-# Support ADIOS BP files
+# Support Read Capability of ADIOS BP files
 
-Starting from version 1.12.0, PnetCDF supports reading data from ADIOS 1.x BP files. 
-Through calling PnetCDF APIs, this feature allows applications to
-read files in BP format. For now, PnetCDF cannot write to BP formated files.
+Starting from version 1.12.0, PnetCDF supports read capability of BP files. Note that write capability is not yet supported in PnetCDF.
 
 ## Enable ADIOS support
 
-PnetCDF requires a ADIOS library (https://www.olcf.ornl.gov/center-projects/adios/) that is built with parallel I/O support.
+PnetCDF requires an [ADIOS library](https://www.olcf.ornl.gov/center-projects/adios/) version 1.x. We recommend version 1.13.1.
+
+* To build ADIOS library
+  + Obtain the source tar ball of ADIOS from URL: https://www.olcf.ornl.gov/center-projects/adios/
+  + Build command
+    ```
+    gzip -dc adios-1.13.1.tar.gz | tar –xf -
+    cd adios-1.13.1
+    ./configure --prefix=/ADIOS/install/path
+    make install
+    ```
 * To build PnetCDF with ADIOS support
   + Add `--enable-adios` option at the configure command line. Option
     `--with-adios` can be used to specify the installation path of ADIOS.
@@ -18,36 +26,26 @@ PnetCDF requires a ADIOS library (https://www.olcf.ornl.gov/center-projects/adio
                 --enable-adios \
                 --with-adios=/ADIOS/install/path
     ```
-* To build ADIOS library for the ADIOS driver
-  + Download ADIOS
-    git clone https://github.com/ornladios/ADIOS.git
-  + Compile ADIOS
-    ./configure --prefix=<install/directory>
-    make install
-* For detail regarding buuilding the ADIOS library, please refer to https://users.nccs.gov/~pnorbert/ADIOS-UsersManual-1.13.0.pdf
-* The ADIOS driver is only tested on ADIOS 1.12 or later
+
+* For detailed ADIOS configuration options, please refer to [ADIOS User Manual]( https://users.nccs.gov/~pnorbert/ADIOS-UsersManual-1.13.0.pdf)
 
 
-## Accessing ADIOS file
+## Reading BP files
 
-For now, PnetCDF can only read BP formated file. To open a AIODS BP file, add the flag NC_NOWRITE into argument cmode when
-calling `ncmpi_open()`. For example,
+PnetCDF checks the BP file format automatically. There is no need to add any flag to argument `omode` when calling `ncmpi_open()`. For example,
 ```
-int cmode;
-cmode = NC_NOWRITE;
-ncmpi_open(MPI_COMM_WORLD, "testfile.bp", cmode, MPI_INFO_NULL, &ncid);
+ncmpi_open(MPI_COMM_WORLD, "testfile.bp", NC_NOWRITE, MPI_INFO_NULL, &ncid);
 ```
-
-Setting NC_WRITE flag will result in error. PnetCDF will recognize ADIOS BP file aumatically and selects the proper I/O driver.
-No flag regarding file format is required.
+Calling `ncmpi_open` with `NC_WRITE` flag set in argument `omode` will result in error code `NC_ENOTSUPPORT` returned.
 
 ## Example programs
 
-An example program is avaiable at /examples/adios/read_all.c
+Example programs are available in folder `./examples/adios`. Brief descriptions for all example programs can be found in ` examples/README`.
 
 ## Design of ADIOS driver
 
-The ADIOS driver is a convenience wrapper of the ADIOS library that allows users to read ADIOS BP formatted file using PnetCDF API. The ADIOS driver maps ADIOS data structures to NetCDF data structures and translates NetCDF operation into corresponding ADIOS function call. It allows applications using NetCDF file format to access BP formatted files without the need to rewrite using ADIOS API. It also eliminates the need to translate BP formatted files for existing PnetCDF applications.
+The ADIOS driver is a wrapper of the ADIOS library that enables users to read BP files using PnetCDF APIs. The ADIOS driver maps ADIOS data structures to NetCDF data structures and translates PnetCDF API calls into corresponding ADIOS function calls.
+
 
 * Opening the file
   When an ADIOS BP formatted file is opened. The ADIOS driver parse the BP file header for metadata involving variables and dimensions because dimension information cannot be retrieved using ADIOS read API. Meanwhile, the driver opens the file using ADIOS read API for variable data and attribute reading. 
