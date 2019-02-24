@@ -12,6 +12,12 @@ PnetCDF requires an [ADIOS library](https://www.olcf.ornl.gov/center-projects/ad
     ```
     gzip -dc adios-1.13.1.tar.gz | tar –xf -
     cd adios-1.13.1
+    export MPICC=<MPI C compiler command> 
+    export MPICXX=<MPI C++ compiler command> 
+    export MPIFC=<MPI Fortran compiler command> 
+    export CC=<C compiler command> 
+    export CXX=<C++ compiler command> 
+    export FC=<Fortran compiler command> 
     ./configure --prefix=/ADIOS/install/path
     make install
     ```
