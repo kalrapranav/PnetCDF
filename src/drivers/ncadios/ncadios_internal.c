@@ -199,6 +199,7 @@ int ncadiosi_parse_header_readall (NC_ad *ncadp) {
     int i, j;
     int varid;
     int *dimids = NULL;
+    int recdimid = -1;
     int maxndim = 0;
     char name[1024];
 
@@ -207,8 +208,8 @@ int ncadiosi_parse_header_readall (NC_ad *ncadp) {
         ADIOS_VARINFO * v = adios_inq_var_byid (ncadp->fp, i);
         adios_inq_var_stat (ncadp->fp, v, 0, 0);
 
-        if (maxndim < v->ndim){
-            maxndim = v->ndim;
+        if (maxndim < v->ndim + 1){
+            maxndim = v->ndim + 1;
             if (dimids != NULL){
                 NCI_Free(dimids);
             }
@@ -216,17 +217,31 @@ int ncadiosi_parse_header_readall (NC_ad *ncadp) {
         }
         
         // Record every dimensions
-        for (j = 0; j < v->ndim; j++){
+        if (v->nsteps > 1){
+            if (recdimid < 0){
+                err = ncadiosi_def_dim(ncadp, name, NC_UNLIMITED, &recdimid);
+                if (err != NC_NOERR){
+                    DEBUG_RETURN_ERROR(err)
+                }
+            }
+            dimids[0] = recdimid;
+        }
+        
+        for (j = 1; j <= v->ndim; j++){
             sprintf(name, "var_%d_dim_%d", i, j);
-            err = ncadiosi_def_dim(ncadp, name, v->dims[j], dimids + j);
+            err = ncadiosi_def_dim(ncadp, name, v->dims[j - 1], dimids + j);
             if (err != NC_NOERR){
                 DEBUG_RETURN_ERROR(err)
             }
         }
 
         // Record variable
-        sprintf(name, "var_%d", i);
-        err = ncadiosi_def_var(ncadp, ncadp->fp->var_namelist[i], ncadios_to_nc_type(v->type), v->ndim, dimids, &varid);
+        if (v->nsteps > 1){
+            err = ncadiosi_def_var(ncadp, ncadp->fp->var_namelist[i], ncadios_to_nc_type(v->type), v->ndim + 1, dimids, &varid);
+        }
+        else{
+            err = ncadiosi_def_var(ncadp, ncadp->fp->var_namelist[i], ncadios_to_nc_type(v->type), v->ndim, dimids + 1, &varid);
+        }
         if (err != NC_NOERR){
             DEBUG_RETURN_ERROR(err)
         }

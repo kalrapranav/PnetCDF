@@ -645,7 +645,7 @@ int ncd_dataset (NC_ad* ncid
 
 int ncadiosi_parse_header_bp2ncd (NC_ad *ncid)
 {
-    int err;
+    int i, err;
     char out_fname [256];
     int rc = 0;
     /*
@@ -725,6 +725,13 @@ int ncadiosi_parse_header_bp2ncd (NC_ad *ncid)
         return err;
     }
 
+    for (i = 0; i < vars_root->characteristics_count; i++){
+        if (vars_root->characteristics [i].file_index != (uint32_t)-1) { 
+            printf("subfile detected\n");
+            return -1;
+        }
+    }
+
     copy_buffer(b_1, b);
     adios_posix_read_attributes_index (b);
     err = adios_parse_attributes_index_v1 (b, &attrs_root);
@@ -746,6 +753,13 @@ int ncadiosi_parse_header_bp2ncd (NC_ad *ncid)
         struct adios_var_header_struct_v1 var_header;
         struct adios_var_payload_struct_v1 var_payload;
         struct adios_attribute_struct_v1 attribute;
+
+        if (pg->offset_in_file >= b->pg_index_offset) 
+        {
+            printf ("Process Group offset is beyond the footer.");
+            pg = pg->next;
+            continue;
+        }
 
         // setup here to read the process group from (and size)
         b->read_pg_offset = pg->offset_in_file;

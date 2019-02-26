@@ -54,6 +54,23 @@ typedef struct NC_ad_var_list {
     int nalloc;
 } NC_ad_var_list;
 
+
+/* Get_req structure */
+typedef struct NC_ad_get_req {
+    int valid;  // If this request object is in use (corresponding to some nonblocking request)
+    int ready;  // If the data has been read
+    char *buf, *cbuf, *xbuf;
+    
+} NC_ad_get_req;
+
+/* Get_req list structure */
+typedef struct NC_ad_get_list {
+    NC_ad_get_req *reqs;    // Array of request object
+    int *ids;   // Array of request ids
+    int nalloc; // Size of the pool
+    int nused;  // Number of ids issued
+} NC_ad_get_list;
+
 typedef struct NC_ad NC_ad; /* forward reference */
 struct NC_ad {
     int                mode;        /* file _open/_create mode */
@@ -69,6 +86,7 @@ struct NC_ad {
     NC_ad_var_list     vars;
     NC_ad_att_list     atts;
     NC_ad_dim_list     dims;
+    NC_ad_get_list  getlist;
 };
 
 extern int 
