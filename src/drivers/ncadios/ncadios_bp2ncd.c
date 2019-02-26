@@ -727,7 +727,9 @@ int ncadiosi_parse_header_bp2ncd (NC_ad *ncid)
 
     for (i = 0; i < vars_root->characteristics_count; i++){
         if (vars_root->characteristics [i].file_index != (uint32_t)-1) { 
-            printf("subfile detected\n");
+            if (ncid->rank == 0){
+                printf("Subfile detected, abort np2ncd parsing\n"); fflush(stdout);
+            }
             return -1;
         }
     }
@@ -756,7 +758,9 @@ int ncadiosi_parse_header_bp2ncd (NC_ad *ncid)
 
         if (pg->offset_in_file >= b->pg_index_offset) 
         {
-            printf ("Process Group offset is beyond the footer.");
+            if (ncid->rank == 0){
+                printf ("Process Group offset is beyond the footer.\n"); fflush(stdout);
+            }
             pg = pg->next;
             continue;
         }
