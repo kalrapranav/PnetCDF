@@ -53,6 +53,7 @@
 #include <pnc_debug.h>
 #include <common.h>
 #include <ncadios_driver.h>
+#include <ncadios_internal.h>
 #include <string.h>
 
 int
@@ -361,11 +362,8 @@ ncadios_iget_var(void             *ncdp,
     int err;
     NC_ad *ncadp = (NC_ad*)ncdp;
 
-    /* TODO: Nonblocking support */
-    DEBUG_RETURN_ERROR(NC_ENOTSUPPORT);
-
-    return NC_NOERR;
-}
+    return ncadiosi_iget_var(ncadp, varid, start, count, stride, imap, buf, bufcount, buftype, reqid);
+} 
 
 int
 ncadios_iput_var(void             *ncdp,

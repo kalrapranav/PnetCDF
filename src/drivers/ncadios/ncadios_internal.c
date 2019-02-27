@@ -12,6 +12,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <mpi.h>
+#include <limits.h>
 
 #include <pnc_debug.h>
 #include <common.h>
@@ -106,6 +107,11 @@ int ncadiosi_def_dim(NC_ad* ncadp, char* name, int len, int *id) {
     
     //return NC_NOERR;
 
+    if (len == NC_UNLIMITED){
+        *id = INT_MAX;
+        return NC_NOERR;
+    }
+
     if (CHECK_NAME(name)){
         dim.len = len;
         dim.name = NCI_Malloc(strlen(name) + 1);
@@ -157,38 +163,19 @@ int ncadiosi_parse_attrs(NC_ad* ncadp) {
 
 int ncadiosi_parse_rec_dim(NC_ad *ncadp) {
     int err;
+    int dimid;
     int i, j;
+    char name[128];
     
-    // Find record dimension
-    ncadp->recdim = -1;
-    for(i = 0; i < ncadp->dims.cnt; i++){
-        if (ncadp->dims.data[i].len == NC_UNLIMITED){
-            ncadp->recdim = i;
-            break;
-        }
-    }
-
-    // Find record dimension size
-    ncadp->nrec = 0;
     for(i = 0; i < ncadp->vars.cnt; i++){
-        for(j = 0; j < ncadp->vars.data[i].ndim; j++){
-            // Found a record variable
-            if (ncadp->vars.data[i].dimids[j] == ncadp->recdim){
-                ADIOS_VARINFO * v;
+        if (ncadp->vars.data[i].dimids[0] == INT_MAX){
+            ADIOS_VARINFO * v = adios_inq_var(ncadp->fp, ncadp->vars.data[i].name);
+            adios_inq_var_stat (ncadp->fp, v, 0, 0);
 
-                // Get var info
-                v = adios_inq_var(ncadp->fp, ncadp->vars.data[i].name);
-                if (v == NULL){
-                    err = ncmpii_error_adios2nc(adios_errno, "get_var");
-                    DEBUG_RETURN_ERROR(err);
-                }
-
-                // Update record dim size
-                if (ncadp->nrec < v->dims[j]){
-                    ncadp->nrec = v->dims[j];
-                }
-
-                adios_free_varinfo(v);
+            sprintf(name, "var_%d_timesteps", i);
+            err = ncadiosi_def_dim(ncadp, name, v->nsteps, ncadp->vars.data[i].dimids);
+            if (err != NC_NOERR){
+                DEBUG_RETURN_ERROR(err)
             }
         }
     }
@@ -251,4 +238,3 @@ int ncadiosi_parse_header_readall (NC_ad *ncadp) {
 
     return NC_NOERR;
 }
-

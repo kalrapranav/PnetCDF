@@ -15,6 +15,8 @@
 #include "adios_bp_v1.h"
 #include "adios_internals.h"
 #include "ncadios_driver.h"
+#include <ncadios_internal.h>
+
 #define ERR(e){if(e){printf("Error:%d\n",e);return 2;}}
 #define DIVIDER "\t---------------------------------\n"
 //#define DIVIDER "\t************************************\n"
