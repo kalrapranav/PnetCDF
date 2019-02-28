@@ -214,46 +214,47 @@ int ncadiosi_handle_put_req(NC_ad *ncadp, int reqid, int *stat)
      * Valid id range from 0 ~ nalloc - 1
      */
     if (reqid >= lp->nalloc || reqid < 0 || lp->pos[reqid] >= lp->nused) {
-        DEBUG_RETURN_ERROR(NC_EINVAL_REQUEST);
+        status = NC_EINVAL_REQUEST;
     }
+    else{
+        // Locate the req object, which is reqs[reqid]
+        req = lp->reqs + reqid;
 
-    // Locate the req object, which is reqs[reqid]
-    req = lp->reqs + reqid;
-
-    // Perform ADIOS read if this request haven't been read
-    if (!(req->ready)){    
-        ncadiosi_perform_read(ncadp);
-    }
-
-    if (req->vtype != req->buftype){
-        err = ncadiosiconvert(req->xbuf, req->cbuf, req->vtype, req->buftype, (int)(req->ecnt));
-        if (status == NC_NOERR){
-            status = err;
+        // Perform ADIOS read if this request haven't been read
+        if (!(req->ready)){    
+            ncadiosi_perform_read(ncadp);
         }
-        NCI_Free(req->xbuf);
+
+        if (req->vtype != req->buftype){
+            err = ncadiosiconvert(req->xbuf, req->cbuf, req->vtype, req->buftype, (int)(req->ecnt));
+            if (status == NC_NOERR){
+                status = err;
+            }
+            NCI_Free(req->xbuf);
+        }
+
+        if (req->cbuf != req->buf){
+            int position = 0;
+
+            MPI_Unpack(req->cbuf, req->cbsize, &position, req->buf, 1, req->imaptype, MPI_COMM_SELF);
+            MPI_Type_free(&(req->imaptype));
+
+            NCI_Free(req->cbuf);
+        }
+
+        // Record get size
+        MPI_Type_size(req->vtype, &cesize);
+        ncadp->getsize += cesize * (MPI_Offset)req->ecnt;
+
+        // Recycle req object to the pool
+        err = ncadiosi_get_list_remove(lp, reqid);
+        if (err != NC_NOERR){
+            return err;
+        }
     }
-
-    if (req->cbuf != req->buf){
-        int position = 0;
-
-        MPI_Unpack(req->cbuf, req->cbsize, &position, req->buf, 1, req->imaptype, MPI_COMM_SELF);
-        MPI_Type_free(&(req->imaptype));
-
-        NCI_Free(req->cbuf);
-    }
-
-    // Record get size
-    MPI_Type_size(req->vtype, &cesize);
-    ncadp->getsize += cesize * (MPI_Offset)req->ecnt;
 
     // Return status to the user
     if (stat != NULL) *stat = status;
-
-    // Recycle req object to the pool
-    err = ncadiosi_get_list_remove(lp, reqid);
-    if (err != NC_NOERR){
-        return err;
-    }
 
     return NC_NOERR;
 }
@@ -313,17 +314,6 @@ ncadiosi_iget_var(NC_ad *ncadp,
     for(i = 0; i < v->ndim; i++){
         r.ecnt *= (size_t)count[i];
     }
-    
-    // PnetCDF allows accessing in different type
-    // Check if we need to convert
-    r.vtype = ncadios_to_mpi_type(v->type);
-    if (r.vtype == buftype){
-        r.xbuf = r.cbuf;
-    }
-    else{
-        esize = (size_t)adios_type_size(v->type, NULL);
-        r.xbuf = NCI_Malloc(esize * r.ecnt);
-    }
 
     // If user buffer is contiguous
     if (imap == NULL){
@@ -337,6 +327,17 @@ ncadiosi_iget_var(NC_ad *ncadp,
         MPI_Type_size(buftype, &cesize);
         r.cbsize = r.ecnt * (size_t)cesize;
         r.cbuf = NCI_Malloc(r.cbsize);
+    }
+    
+    // PnetCDF allows accessing in different type
+    // Check if we need to convert
+    r.vtype = ncadios_to_mpi_type(v->type);
+    if (r.vtype == buftype){
+        r.xbuf = r.cbuf;
+    }
+    else{
+        esize = (size_t)adios_type_size(v->type, NULL);
+        r.xbuf = NCI_Malloc(esize * r.ecnt);
     }
 
     // Time step dimension must be treated specially
