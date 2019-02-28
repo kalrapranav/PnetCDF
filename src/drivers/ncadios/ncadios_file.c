@@ -151,10 +151,6 @@ ncadios_open(MPI_Comm     comm,
 
     if (ncadp->rank == 0) {
         if (!parse_done){
-#ifdef PNETCDF_DEBUG
-            printf("Warning: bp2ncd fails to parse header, presenting virtual dimensions\n");
-            fflush(stdout);
-#endif
             // Reset var and dim list by free and realloc
             ncadiosi_var_list_free(&(ncadp->vars));
             ncadiosi_dim_list_free(&(ncadp->dims));

@@ -285,6 +285,8 @@ ncadios_get_var(void             *ncdp,
         DEBUG_RETURN_ERROR(err);
     }
 
+    adios_selection_delete(sel);
+
     if (stride != NULL){
         NCI_Free(points);
     }
