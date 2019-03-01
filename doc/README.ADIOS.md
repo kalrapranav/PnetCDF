@@ -77,7 +77,8 @@ The ADIOS driver is a wrapper of ADIOS function calls that enables users to read
     + varn: Although it is possible to translate each subarray request into an ADIOS read call, it does not perform well. 
     + `ncmpi_cancel`: cancelling already posted non-blocking requests is not supported. This is due to no corresponding mechanism in ADIOS library to track the status of nonblocking requests.
   + Data provenance
-    + The BP files can store the file access history. Variables can have more than one time step and each time step corresponds to an update to the variables. For variables with more than one time step, the PnetCDF’s ADIOS driver treats them like record variables. It adds the time step as an additional dimension (the most significant one) to those variables.
+    + The BP files can store the file access history. Variables can have more than one time step and each time step corresponds to an update to the variables. For variables with more than one time step, the PnetCDF’s ADIOS driver adds the time step as an additional dimension (the most significant one) to those variables.
+    
   + Data type conversion
     + ADIOS library puts users the responsibility of data type conversion, and therefore its read APIs return data in its origin type. PnetCDF, on the other hand, supports automatic type conversion. (In the meantime, PnetCDF also checks data type overflow during the conversion.) The PnetCDF ADIOS driver performs the conversion by first reading the variable into a temporary buffer, and then converting the data into the desired type.
 
