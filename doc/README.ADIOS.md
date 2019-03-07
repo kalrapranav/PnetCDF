@@ -64,9 +64,9 @@ The ADIOS driver is a wrapper of ADIOS function calls that enables users to read
     + Dimension objects -- One of differences between BP and NetCDF formats is the dimension object.
       In NetCDF, dimensions are objects shared by multiple variables. To find the size of a variable, an application first inquires dimensions used to define the variable and then inquires the size of each dimension object.
       In BP format, there is no special object defined for dimensions. The dimension of a variable can be either a constant or a reference to a scalar variable.
-    + Although the same scalable variable can appear as a dimension in multiple variables, ADIOS library does not expose such relationship to the users. Instead, the dimensions of a variable are presented by their sizes when inquired.
-    + Make use of `bp2ncd` utility -- ADIOS distribution comes with a utility program named `bp2ncd` that converts BP files to NetCDF files. We make use of its source codes to parse the variable and dimension information.
-    + One-file-per-process cases -- `bp2ncd` does not support the one-file-per-process configuration (POSIX transmission method). `bp2ncd` cannot retrieve the metadata of dimension and variables from all files. To resolve this, the PnetCDF ADIOS driver creates a virtualized dimension object for every dimension of each variable. It considers all dimensions of a variable are uniquely for that variable.
+    + Although the same scalar variable can be used as a dimension to define multiple variables, ADIOS library does not expose such information directly to the users, such as dimension IDs in NetCDF semantics. Instead, the dimensions of a variable are presented by their sizes when inquired.
+    + Make use of `bp2ncd` utility -- ADIOS library distributions come with a utility program named `bp2ncd` that converts BP files to NetCDF files. We make use of its source codes to parse the variable and dimension information.
+    + One-file-per-process cases -- `bp2ncd` does not support the one-file-per-process configuration. `bp2ncd` cannot retrieve the metadata of dimension and variables from all files. To resolve this, the PnetCDF ADIOS driver creates a virtualized dimension object for every dimension of each variable. It considers all dimensions of a variable are uniquely for that variable.
 
 * Reading variables
   + Reference to variables
