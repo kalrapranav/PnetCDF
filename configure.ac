@@ -122,8 +122,6 @@ AH_TEMPLATE([ENABLE_NETCDF4],           [Define if to enable NetCDF-4 support])
 AH_TEMPLATE([ENABLE_ADIOS],             [Define if to enable ADIOS BP read feature])
 AH_TEMPLATE([HDF5_VER_GE_1_10_4],       [Define if HDF5 version is at least 1.10.4])
 AH_TEMPLATE([PNC_MALLOC_TRACE],         [Define if to enable malloc tracing])
-AH_TEMPLATE([HAVE_FUNC_MACRO],          [Define if C++ macro __func__ is defined])
-AH_TEMPLATE([HAVE_FUNCTION_MACRO],      [Define if C++ macro __FUNCTION__ is defined])
 AH_TEMPLATE([RELAX_COORD_BOUND],        [Define if relaxed coordinate check is enabled])
 AH_TEMPLATE([ENABLE_LARGE_SINGLE_REQ],  [Define if to enable large single MPI-IO request])
 AH_TEMPLATE([ENABLE_NULL_BYTE_HEADER_PADDING], [Define if to enable strict null-byte padding in file header])
@@ -142,17 +140,17 @@ dnl an option to use a customized rm command
 AC_ARG_VAR(RM, Command for deleting files or directories. @<:@default: rm@:>@)
 if test "x${RM}" != x ; then
    AC_MSG_CHECKING(rm )
-   if ! test -f ${RM} ; then
-      AC_CHECK_PROG([rm_cmd], [${RM}], [yes], [no])
-      if test "x${rm_cmd}" = xyes ; then
-         RM=${RM}
+   dnl ${RM} set by user may contain flags
+   RM_CMD=`echo ${RM} | cut -d' ' -f1`
+   if ! test -f ${RM_CMD} ; then
+      AC_CHECK_PROG([rm_cmd], [${RM_CMD}], [yes], [no])
+      if test "x${rm_cmd}" = xno ; then
+         RM=rm
       fi
-   else
-      RM=${RM}
    fi
    AC_MSG_RESULT(using $RM)
 else
-   RM="rm"
+   RM=rm
 fi
 
 AC_ARG_ENABLE(echo,
@@ -1327,15 +1325,15 @@ if test "x${has_fortran}" = xyes ; then
 fi
 PAC_ENABLE_COVERAGE
 
+dnl Some C++ compilers (e.g. Fujitsu) have macro __FUNCTION__, but not __func__
+use_cxx_macro_function=no
 if test "x${has_mpicxx}" = xyes ; then
    UD_CXX_MACRO_FUNC
-   if test "x${ac_cv_cxx_macro_func}" == xyes ; then
-      AC_DEFINE(HAVE_FUNC_MACRO)
-   fi
-   if test "x${ac_cv_cxx_macro_function}" == xyes ; then
-      AC_DEFINE(HAVE_FUNCTION_MACRO)
+   if test "x${ac_cv_cxx_macro_func}" = xno -a "x${ac_cv_cxx_macro_function}" = xyes ; then
+      use_cxx_macro_function=yes
    fi
 fi
+AM_CONDITIONAL(REPLACE_CXX_FUNC_MACRO, [test x$use_cxx_macro_function = xyes])
 
 if test "x${debug}" = xyes; then
    dnl add -g flag if not presented
@@ -1486,10 +1484,13 @@ if test "x$enable_netcdf4" = "xyes" ; then
    dnl Add the path to CPPFLAGS, as it is needed to compile PnetCDF codes
    netcdf_includedir=`$nc_config --includedir`
    UD_MSG_DEBUG([netcdf_includedir=$netcdf_includedir])
-   CPPFLAGS="-I${netcdf_includedir} ${CPPFLAGS}"
 
-   AC_CHECK_HEADERS([netcdf.h netcdf_par.h netcdf_meta.h],
-                    [have_netcdf4=yes], [have_netcdf4=no])
+   saved_CPPFLAGS=$CPPFLAGS
+   CPPFLAGS="-I${netcdf_includedir} ${CPPFLAGS}"
+   have_netcdf4=yes
+   AC_CHECK_HEADER([netcdf.h],      [], [have_netcdf4=no])
+   AC_CHECK_HEADER([netcdf_par.h],  [], [have_netcdf4=no])
+   AC_CHECK_HEADER([netcdf_meta.h], [], [have_netcdf4=no])
    if test "x${have_netcdf4}" = xno; then
       AC_MSG_ERROR([
       ------------------------------------------------------------
@@ -1535,6 +1536,17 @@ if test "x$enable_netcdf4" = "xyes" ; then
    fi
    AC_MSG_RESULT([yes])
 
+   AC_MSG_CHECKING([whether relax-coord-bound is enabled in NetCDF-4])
+   AC_COMPILE_IFELSE([AC_LANG_PROGRAM([], [[
+#include <netcdf_meta.h>
+#if !defined(NC_RELAX_COORD_BOUND) || NC_RELAX_COORD_BOUND == 0
+      choke me
+#endif
+   ]])], [nc_relax_coord_bound=yes], [nc_relax_coord_bound=no])
+   AC_MSG_RESULT([$nc_relax_coord_bound])
+   dnl restore CPPFLAGS
+   CPPFLAGS=$saved_CPPFLAGS
+
    # Build on top of NetCDF4 with PnetCDF already enabled is not supported
    netcdf_has_pnetcdf=`$nc_config --has-pnetcdf`
    if test x$netcdf_has_pnetcdf = xyes; then
@@ -1550,10 +1562,15 @@ if test "x$enable_netcdf4" = "xyes" ; then
    dnl remove -lpnetcdf if it contains it
    netcdf_libs=`echo $netcdf_libs | $SED "s/-lpnetcdf//g"`
 
-   LDFLAGS="-L${netcdf_libdir} ${LDFLAGS}"
-   LIBS="${netcdf_libs} ${LIBS}"
    # Validate netcdf library
-   AC_CHECK_LIB([netcdf], [nc_open],, [AC_MSG_ERROR([Cannot find nc_open in NetCDF-4 library])])
+   saved_LDFLAGS=$LDFLAGS
+   saved_LIBS=$LIBS
+   LDFLAGS="-L$netcdf_libdir $LDFLAGS"
+   AC_SEARCH_LIBS([nc_open], [netcdf], [], [AC_MSG_ERROR([Cannot find nc_open in NetCDF-4 library])])
+   LDFLAGS=$saved_LDFLAGS
+   LIBS=$saved_LIBS
+   # Do not add -L$netcdf_libdir to LDFLAGS and -lnetcdf to LIBS
+   # They are only needed when linking executables.
 
    # Get directory path of netcdf library files
    # netcdf_lib=`$nc_config --libs`
@@ -1573,12 +1590,13 @@ if test "x$enable_netcdf4" = "xyes" ; then
 
    dnl check if HDF5 version 1.10.4 or later is used to build NetCDF
    netcdf_cflags=`$nc_config --cflags`
+
    dnl No need to add the include paths used to build NetCDF to CPPFLAGS
    dnl permanently, as it is not needed to compile PnetCDF codes
-   CPPFLAGS_save=$CPPFLAGS
+   saved_CPPFLAGS=$CPPFLAGS
    CPPFLAGS+=" $netcdf_cflags"
    dnl AC_CHECK_HEADERS uses CPPFLAGS, not CFLAGS
-   AC_CHECK_HEADERS([hdf5.h], [have_hdf5=yes], [have_hdf5=no])
+   AC_CHECK_HEADER([hdf5.h], [have_hdf5=yes], [have_hdf5=no])
    if test "x$have_hdf5" = xyes ; then
       AC_MSG_CHECKING([whether HDF5 version is 1.10.4 or later])
       AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <hdf5.h>]], [[
@@ -1592,16 +1610,13 @@ if test "x$enable_netcdf4" = "xyes" ; then
       fi
    fi
    # restore CPPFLAGS
-   CPPFLAGS=$CPPFLAGS_save
+   CPPFLAGS=$saved_CPPFLAGS
 
-   AC_MSG_CHECKING([whether relax-coord-bound is enabled in NetCDF-4])
-   AC_COMPILE_IFELSE([AC_LANG_PROGRAM([], [[
-#include <netcdf_meta.h>
-#if !defined(NC_RELAX_COORD_BOUND) || NC_RELAX_COORD_BOUND == 0
-      choke me
-#endif
-   ]])], [nc_relax_coord_bound=yes], [nc_relax_coord_bound=no])
-   AC_MSG_RESULT([$nc_relax_coord_bound])
+   netcdf_incdir=`$nc_config --includedir`
+   AC_SUBST([NETCDF4_INC], ["-I$netcdf_incdir"])
+   AC_SUBST([NETCDF4_LDFLAGS], ["-L$netcdf_libdir"])
+   AC_SUBST([NETCDF4_LIBS], ["-lnetcdf"])
+   AC_SUBST([NETCDF4_PACKAGE], [netcdf])
 fi
 
 AC_ARG_ENABLE([erange-fill],
@@ -2081,6 +2096,14 @@ fi
 if test "x${LIBS}" != x ; then
    echo "\
               LIBS     = ${LIBS}"
+fi
+if test "x${enable_netcdf4}" = xyes; then
+   echo "\
+
+   NetCDF-4 library:
+              NETCDF4_INC     = ${NETCDF4_INC}
+              NETCDF4_LDFLAGS = ${NETCDF4_LDFLAGS}
+              NETCDF4_LIBS    = ${NETCDF4_LIBS}"
 fi
 echo "\
 
