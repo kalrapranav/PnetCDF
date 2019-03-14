@@ -23,7 +23,7 @@
 int cmp_int(int *in, int n, char *lbl){
     int i, j;
     int rank, np;
-    int err, nerrs = 0;
+    int nerrs = 0;
     int *all;
 
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -59,9 +59,8 @@ int cmp_int(int *in, int n, char *lbl){
 }
 
 int main(int argc, char** argv) {
-    int i;
-    char filename[256], *hint_value, lbl[256];
-    int rank, np, err, nerrs=0, bb_enabled=0;
+    char filename[256], lbl[256];
+    int rank, np, err, nerrs=0;
     int ncid, nvar, ndim;
     int varid, dimid, len;
     MPI_Offset dimlen;

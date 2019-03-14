@@ -28,15 +28,10 @@
 #define ERR(e) {printf("Error: %s\n", nc_strerror(e)); exit(ERRCODE);}
 
 int main(int argc, char** argv) {
-    int i, j, nerrs=0, rank, nprocs, err;
+    int nerrs=0, rank, nprocs, err;
     int ncid, vid, natt;
-    int dimids[2];
-    MPI_Offset start[2], count[2];
     char data[1024];
 
-    MPI_Offset dlen;
-    char tmp[1024];
-    int x, y;
 
     MPI_Init(&argc, &argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -110,7 +105,6 @@ int main(int argc, char** argv) {
 
     ncmpi_close(ncid);
 
-fn_exit:
     MPI_Allreduce(MPI_IN_PLACE, &nerrs, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
     if (rank == 0) {
         if (nerrs) printf(FAIL_STR,nerrs);
