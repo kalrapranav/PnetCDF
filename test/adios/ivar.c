@@ -59,32 +59,38 @@ int main(int argc, char** argv) {
         free(cmd_str);
     }
 
-    err = ncmpi_open(MPI_COMM_WORLD, FILE_NAME, NC_NOWRITE, MPI_INFO_NULL, &ncid);
+    err = ncmpi_open(MPI_COMM_WORLD, FILE_NAME, NC_NOWRITE, MPI_INFO_NULL, 
+                        &ncid);
     CHECK_ERR
 
     err = ncmpi_inq_dim(ncid, 0, tmp, &dlen); CHECK_ERR
     if (strcmp(tmp, D1_NAME) != 0){
-        printf("Rank %d: Expect Dim 0 name = %s, but got %s\n", rank, D1_NAME, tmp);
+        printf("Rank %d: Expect Dim 0 name = %s, but got %s\n", rank, D1_NAME, 
+                tmp);
         nerrs++;
     }
     if (dlen != (MPI_Offset)NX){
-        printf("Rank %d: Expect Dim 0 len = %llu, but got %llu\n", rank, NX, (unsigned long long)dlen);
+        printf("Rank %d: Expect Dim 0 len = %llu, but got %llu\n", rank, NX, 
+                (unsigned long long)dlen);
         nerrs++;
     }
 
     err = ncmpi_inq_dim(ncid, 1, tmp, &dlen); CHECK_ERR
     if (strcmp(tmp, D2_NAME) != 0){
-        printf("Rank %d: Expect Dim 1 name = %s, but got %s\n", rank, D2_NAME, tmp);
+        printf("Rank %d: Expect Dim 1 name = %s, but got %s\n", rank, D2_NAME, 
+                tmp);
         nerrs++;
     }
     if (dlen != (MPI_Offset)NY){
-        printf("Rank %d: Expect Dim 1 len = %llu, but got %llu\n", rank, NY, (unsigned long long)dlen);
+        printf("Rank %d: Expect Dim 1 len = %llu, but got %llu\n", rank, NY, 
+                (unsigned long long)dlen);
         nerrs++;
     }
 
     err = ncmpi_inq_var(ncid, 0, tmp, NULL, &ndim, dimids, NULL); CHECK_ERR
     if (strcmp(tmp, V1_NAME) != 0){
-        printf("Rank %d: Expect Var 0 name = %s, but got %s\n", rank, D2_NAME, tmp);
+        printf("Rank %d: Expect Var 0 name = %s, but got %s\n", rank, D2_NAME, 
+                tmp);
         nerrs++;
     }
     if (ndim != 2){
@@ -93,14 +99,16 @@ int main(int argc, char** argv) {
     }
     for(i = 0; i < ndim; i++){
         if (dimids[i] != i){
-            printf("Rank %d: Expect Var 0 dimids[%d] = %d, but got %d\n", rank, i, i, dimids[i]);
+            printf("Rank %d: Expect Var 0 dimids[%d] = %d, but got %d\n", rank, 
+                    i, i, dimids[i]);
             nerrs++;
         }
     }
 
     err = ncmpi_inq_var(ncid, 1, tmp, NULL, &ndim, dimids, NULL); CHECK_ERR
     if (strcmp(tmp, V2_NAME) != 0){
-        printf("Rank %d: Expect Var 1 name = %s, but got %s\n", rank, D2_NAME, tmp);
+        printf("Rank %d: Expect Var 1 name = %s, but got %s\n", rank, D2_NAME, 
+                tmp);
         nerrs++;
     }
     if (ndim != 1){
@@ -109,7 +117,8 @@ int main(int argc, char** argv) {
     }
     for(i = 0; i < ndim; i++){
         if (dimids[i] != i){
-            printf("Rank %d: Expect Var 1 dimids[%d] = %d, but got %d\n", rank, i, i, dimids[i]);
+            printf("Rank %d: Expect Var 1 dimids[%d] = %d, but got %d\n", rank, 
+                    i, i, dimids[i]);
             nerrs++;
         }
     }
@@ -127,19 +136,23 @@ int main(int argc, char** argv) {
 
     for(i = 0; i < NY; i++){
         if (fabs(data[i] - (((double)start[0]) + ((double)i) / 100)) > 0.0001){
-            printf("Rank %d: Expect Var 0 [%llu][%d] = %lf, but got %lf\n", rank, start[0], i, ((double)start[0]) + ((double)i) / 100, data[i]);
+            printf("Rank %d: Expect Var 0 [%llu][%d] = %lf, but got %lf\n", 
+                    rank, start[0], i, ((double)start[0]) + ((double)i) / 100, 
+                    data[i]);
             nerrs++;
         }
     }
 
     start[0] = rank % NX;
     count[0] = 1;
-    err = ncmpi_iget_vara_double(ncid, 1, start, count, data2, reqid + 1); CHECK_ERR
+    err = ncmpi_iget_vara_double(ncid, 1, start, count, data2, reqid + 1); 
+    CHECK_ERR
 
     err = ncmpi_wait_all(ncid, 1, reqid + 1, stat + 1); CHECK_ERR
 
     if (fabs(data2[0] - ((double)start[0])) > 0.0001){
-        printf("Rank %d: Expect Var 1 [%llu] = %lf, but got %lf\n", rank, start[0], ((double)start[0]), data2[i]);
+        printf("Rank %d: Expect Var 1 [%llu] = %lf, but got %lf\n", rank, 
+                start[0], ((double)start[0]), data2[i]);
         nerrs++;
     }
 
@@ -154,29 +167,35 @@ int main(int argc, char** argv) {
 
     start[0] = rank % NX;
     count[0] = 1;
-    err = ncmpi_iget_vara_double(ncid, 1, start, count, data2, reqid + 1); CHECK_ERR
+    err = ncmpi_iget_vara_double(ncid, 1, start, count, data2, reqid + 1); 
+    CHECK_ERR
 
     err = ncmpi_wait_all(ncid, NC_GET_REQ_ALL, NULL, NULL); CHECK_ERR
 
     for(i = 0; i < NY; i++){
         if (fabs(data[i] - (((double)start[0]) + ((double)i) / 100)) > 0.0001){
-            printf("Rank %d: Expect Var 0 [%llu][%d] = %lf, but got %lf\n", rank, start[0], i, ((double)start[0]) + ((double)i) / 100, data[i]);
+            printf("Rank %d: Expect Var 0 [%llu][%d] = %lf, but got %lf\n", 
+                    rank, start[0], i, ((double)start[0]) + ((double)i) / 100, 
+                    data[i]);
             nerrs++;
         }
     }
     if (fabs(data2[0] - ((double)start[0])) > 0.0001){
-        printf("Rank %d: Expect Var 1 [%llu] = %lf, but got %lf\n", rank, start[0], ((double)start[0]), data2[i]);
+        printf("Rank %d: Expect Var 1 [%llu] = %lf, but got %lf\n", rank, 
+                start[0], ((double)start[0]), data2[i]);
         nerrs++;
     }
 
     err = ncmpi_wait_all(ncid, 2, reqid, stat); CHECK_ERR
 
     if (stat[0] != NC_EINVAL_REQUEST){
-        printf("Rank %d: Expect stat[0] = %d, but got %d\n", rank, NC_EINVAL_REQUEST, stat[0]);
+        printf("Rank %d: Expect stat[0] = %d, but got %d\n", rank, 
+                NC_EINVAL_REQUEST, stat[0]);
         nerrs++;
     }
     if (stat[1] != NC_EINVAL_REQUEST){
-        printf("Rank %d: Expect stat[1] = %d, but got %d\n", rank, NC_EINVAL_REQUEST, stat[1]);
+        printf("Rank %d: Expect stat[1] = %d, but got %d\n", rank, 
+                NC_EINVAL_REQUEST, stat[1]);
         nerrs++;
     }
 

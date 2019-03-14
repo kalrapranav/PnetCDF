@@ -56,7 +56,8 @@ int main(int argc, char** argv) {
         free(cmd_str);
     }
 
-    err = ncmpi_open(MPI_COMM_WORLD, FILE_NAME, NC_NOWRITE, MPI_INFO_NULL, &ncid);
+    err = ncmpi_open(MPI_COMM_WORLD, FILE_NAME, NC_NOWRITE, MPI_INFO_NULL, 
+                        &ncid);
     CHECK_ERR
 
     err = ncmpi_begin_indep_data(ncid);
@@ -67,16 +68,19 @@ int main(int argc, char** argv) {
         start[1] = 0;
         count[0] = NX;
         count[1] = NY;
-        err = ncmpi_get_vara_double(ncid, 0, start, count, (double*)data); CHECK_ERR
+        err = ncmpi_get_vara_double(ncid, 0, start, count, (double*)data); 
+        CHECK_ERR
 
         imap[0] = 1;
         imap[1] = NX;
-        err = ncmpi_get_varm_double(ncid, 0, start, count, NULL, imap, (double*)datat); CHECK_ERR
+        err = ncmpi_get_varm_double(ncid, 0, start, count, NULL, imap, 
+                                    (double*)datat); CHECK_ERR
 
         for(i = 0; i < NX; i++){
             for(j = 0; j < NY; j++){
                 if (fabs(data[i][j] - datat[j][i]) > 0.0001){
-                    printf("Rank %d: Expect Var 0 [%d][%d] = %lf != Var 0 T [%d][%d] = %lf\n", rank, i, j, data[i][j], j, i, data[j][i]);
+                    printf("Rank %d: Expect Var 0 [%d][%d] = %lf != Var 0 T [%d][%d] = %lf\n", 
+                            rank, i, j, data[i][j], j, i, data[j][i]);
                     nerrs++;
                 }
             }

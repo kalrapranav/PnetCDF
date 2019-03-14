@@ -55,7 +55,8 @@ int main(int argc, char** argv) {
         free(cmd_str);
     }
 
-    err = ncmpi_open(MPI_COMM_WORLD, FILE_NAME, NC_NOWRITE, MPI_INFO_NULL, &ncid);
+    err = ncmpi_open(MPI_COMM_WORLD, FILE_NAME, NC_NOWRITE, MPI_INFO_NULL, 
+                        &ncid);
     CHECK_ERR
 
     start[0] = 0;
@@ -64,11 +65,16 @@ int main(int argc, char** argv) {
     count[1] = 2;
     stride[0] = 5;
     stride[1] = 50;
-    err = ncmpi_get_vars_double_all(ncid, 0, start, count, stride, (double*)data); CHECK_ERR
+    err = ncmpi_get_vars_double_all(ncid, 0, start, count, stride, 
+                                    (double*)data); CHECK_ERR
     for(i = 0; i < 2; i++){
         for(j = 0; j < 2; j++){
-            if (fabs(data[i][j] - (((double)(i * stride[0])) + ((double)(j * stride[1])) / 100)) > 0.0001){
-                printf("Rank %d: Expect Var 0 [%d][%d] = %lf, but got %lf\n", rank, i * (int)stride[0], j * (int)stride[1], (((double)(i * stride[0])) + ((double)(j * stride[1])) / 100), data[i][j]);
+            if (fabs(data[i][j] - (((double)(i * stride[0])) + ((double)(j * 
+                stride[1])) / 100)) > 0.0001){
+                printf("Rank %d: Expect Var 0 [%d][%d] = %lf, but got %lf\n", 
+                        rank, i * (int)stride[0], j * (int)stride[1], 
+                        (((double)(i * stride[0])) + ((double)(j * stride[1]))
+                         / 100), data[i][j]);
                 nerrs++;
             }
         }
