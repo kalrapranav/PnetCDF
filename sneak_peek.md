@@ -3,9 +3,9 @@ This is essentially a placeholder for the next release note ...
 ------------------------------------------------------------------------------
 
 * New features
-  + ADIOS driver -- Reading ADIOS 1.x BP formated file. 
+  + ADIOS BP read capability -- Reading ADIOS 1.x BP formated file. 
     PnetCDF will detected BP file format automatically. No additional flag needed when opening a BP formated file.
-    CUrrently, the ADIOS driver does not support low-level API.
+    Currently, the ADIOS driver does not support low-level API.
 
 * New optimization
   + When inserting nonblocking requests into pending queues, keep the queues
@@ -17,7 +17,7 @@ This is essentially a placeholder for the next release note ...
     fixed-size variables followed by record variables.
 
 * New Limitations
-  + ADIOS driver is ready only. There is also no vard, varn and low-level API support.
+  + ADIOS driver is ready only. For more detail on limitations, please refer to /doc/README.ADIOS.md
 
 * Update configure options
   + Enable ADIOS support.
@@ -28,14 +28,8 @@ This is essentially a placeholder for the next release note ...
     [Issue #33](https://github.com/Parallel-NetCDF/PnetCDF/issues/33).
 
 * New constants
-  + NC_BP = 65536
-    Flag indicating BP file access mode.
-  + NC_FORMAT_BP = 6
-    Constant indicating BP file format.
-  + nf_bp = 65536
-    Flag indicating BP file access mode.
-  + nf_format_bp = 6
-    Constant indicating BP file format.
+  + NC_BP and nf_bp is the flag indicating BP file access mode.
+  + NC_FORMAT_BP and nf_format_bp indicates BP file format.
 
 * New APIs
   + none
@@ -53,7 +47,7 @@ This is essentially a placeholder for the next release note ...
   + none
 
 * New error code
-  + NC_EADIOS
+  + NC_EADIOS, NF_EADIOS
     ADIOS library internal error that does not corresponds to any PnetCDF error code
 
 * New PnetCDF hint
