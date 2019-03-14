@@ -78,7 +78,7 @@ typedef struct NC_bb_metadataheader {
     MPI_Offset rank_id;
     MPI_Offset max_ndims;
     MPI_Offset num_entries;
-    MPI_Offset entry_begin;    
+    MPI_Offset entry_begin;
     int basenamelen;
     char basename[1];   /* The hack to keep basename inside the structure */
 } NC_bb_metadataheader;
@@ -250,7 +250,7 @@ int ncbbio_sharedfile_read(NC_bb_sharedfile *f, void *buf, size_t count);
 int ncbbio_sharedfile_seek(NC_bb_sharedfile *f, off_t offset, int whence);
 
 void ncbbio_extract_hint(NC_bb *ncbbp, MPI_Info info);
-void ncbbio_export_hint(NC_bb *ncbbp, MPI_Info info);
+void ncbbio_export_hint(NC_bb *ncbbp, MPI_Info *info);
 
 extern int
 ncbbio_create(MPI_Comm comm, const char *path, int cmode, int ncid, MPI_Info info, void **ncdp);
