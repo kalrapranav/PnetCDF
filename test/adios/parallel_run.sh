@@ -27,6 +27,8 @@ for i in ${check_PROGRAMS} ; do
         # echo "set PNETCDF_SAFE_MODE ${PNETCDF_SAFE_MODE}"
         ${MPIRUN} ./$i arrays.bp
         ${MPIRUN} ./$i attributes.bp
+        ${MPIRUN} ./$i arrays_big.bp
+        ${MPIRUN} ./$i attributes_big.bp
     done
 done
 

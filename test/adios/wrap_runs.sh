@@ -23,6 +23,8 @@ for j in ${safe_modes} ; do
     # echo "---- set PNETCDF_SAFE_MODE ${PNETCDF_SAFE_MODE}"
     ${TESTSEQRUN} $1 arrays.bp
     ${TESTSEQRUN} $1 attributes.bp
+    ${TESTSEQRUN} $1 arrays_big.bp
+    ${TESTSEQRUN} $1 attributes_big.bp
     # echo ""
 done
 
