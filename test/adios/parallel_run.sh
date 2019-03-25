@@ -28,7 +28,6 @@ for i in ${check_PROGRAMS} ; do
         ${MPIRUN} ./$i arrays.bp
         ${MPIRUN} ./$i attributes.bp
         ${MPIRUN} ./$i arrays_big.bp
-        ${MPIRUN} ./$i attributes_big.bp
     done
 done
 
