@@ -9,7 +9,7 @@
 SUFFIXES = .o .c
 
 AM_CPPFLAGS = -I$(top_builddir)/src/include
-LDADD  = @NETCDF4_LDFLAGS@ @NETCDF4_LIBS@
+LDADD  = @NETCDF4_LDFLAGS@ @ADIOS_LDFLAGS@ @NETCDF4_LIBS@ @ADIOS_LIBS@
 LDADD += $(top_builddir)/src/libs/libpnetcdf.la
 
 check_PROGRAMS = aggregation \
