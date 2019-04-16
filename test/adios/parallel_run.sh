@@ -27,6 +27,10 @@ for i in ${check_PROGRAMS} ; do
         # echo "set PNETCDF_SAFE_MODE ${PNETCDF_SAFE_MODE}"
         ${MPIRUN} ./$i arrays.bp
         ${MPIRUN} ./$i attributes.bp
+        ${MPIRUN} ./$i arrays_big.bp
+        if test ${ADIOS_VER_GE_1132} = 1 ; then
+            ${MPIRUN} ./$i attributes_big.bp
+        fi
     done
 done
 

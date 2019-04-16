@@ -1765,6 +1765,8 @@ fi
 AC_SUBST(ENABLE_ADIOS)
 AM_CONDITIONAL(ENABLE_ADIOS, [test x$enable_adios = xyes])
 
+ADIOS_VER_GE_1132 = 0
+
 if test "x$enable_adios" = "xyes" ; then
     ADIOS_INSTALL=""
     AC_ARG_WITH(adios,
@@ -1825,17 +1827,32 @@ if test "x$enable_adios" = "xyes" ; then
     fi
 
     if test "x${have_adios}" = xno; then
-        AC_MSG_ERROR([
-        ------------------------------------------------------------
-        The ADIOS library and header file are required to build
-        PnetCDF with ADIOS BP read support. Use option
-            --with-adios=/path/to/implementation
-        to specify the location of ADIOS build. In addition,
-        please make sure the MPI C compiler is compatible with the
-        one used to build ADIOS.
-        Stopping ...
-        Check 'config.log' for more information.
-        ------------------------------------------------------------])
+        have_adios2=no
+        AC_MSG_CHECKING(ADIOS2 library)
+        AC_CHECK_HEADERS([adios2_c.h], [have_adios2=yes], [have_adios2=no])
+        if test "x${have_adios2}" = xno; then
+            AC_MSG_ERROR([
+            ------------------------------------------------------------
+            The ADIOS library and header file are required to build
+            PnetCDF with ADIOS BP read support. Use option
+                --with-adios=/path/to/implementation
+            to specify the location of ADIOS build. In addition,
+            please make sure the MPI C compiler is compatible with the
+            one used to build ADIOS.
+            Stopping ...
+            Check 'config.log' for more information.
+            ------------------------------------------------------------])
+        else
+            AC_MSG_ERROR([
+            ------------------------------------------------------------
+            PnetCDF currently only supports ADIOS 1.x.
+            ADIOS 1.x can be downloaded at:
+            https://github.com/ornladios/ADIOS
+            We will support ADIOS 2.x in future releases.
+            ------------------------------------------------------------])
+        fi
+    else
+        LIBS+=" -ladiosread -ladios"
     fi
 
     dnl Check if ADIOS version is 1.12.0 or later
@@ -1854,6 +1871,19 @@ if test "x$enable_adios" = "xyes" ; then
         PnetCDF with ADIOS BP read support. 
         ------------------------------------------------------------])
     fi
+
+    dnl Check if ADIOS version is 1.13.2 or later
+    AC_MSG_CHECKING([Check if ADIOS version is 1.13.2 or later])
+    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <adios_version.h>]], [[
+#if (ADIOS_VERSION_MAJOR*1000000 + ADIOS_VERSION_MINOR*1000 + ADIOS_VERSION_PATCH < 1013002)
+      choke me
+#endif
+    ]])], [adios_ge_1_13_2=yes], [adios_ge_1_13_2=no])
+    AC_MSG_RESULT([$adios_ge_1_13_2])
+
+    if test "x${adios_ge_1_13_2}" = xyes; then
+      ADIOS_VER_GE_1132 = 1
+    fi
     
     CPPFLAGS=$saved_CPPFLAGS
     LDFLAGS=$saved_LDFLAGS
@@ -1864,6 +1894,9 @@ if test "x$enable_adios" = "xyes" ; then
     AC_SUBST([ADIOS_LIBS], [""])
     AC_SUBST([ADIOS_PACKAGE], [adios adiosread])
 fi
+
+AC_SUBST(ADIOS_VER_GE_1132)
+AM_CONDITIONAL(ADIOS_VER_GE_1132, [test x"$ADIOS_VER_GE_1132" = x1])
 
 AC_ARG_ENABLE([profiling],
    [AS_HELP_STRING([--enable-profiling],
