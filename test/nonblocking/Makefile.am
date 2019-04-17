@@ -19,8 +19,8 @@ AM_FCFLAGS  = $(FC_MODINC)$(top_builddir)/src/binding/f90 \
               $(FC_MODINC)$(srcdir)/../common
 AM_FFLAGS   = -I$(top_builddir)/src/binding/f77
 
-LDADD  = $(top_builddir)/src/libs/libpnetcdf.la
-LDADD += ${top_builddir}/src/libs/libpnetcdf.la ../common/libtestutils.la -lm
+LDADD  = ${top_builddir}/src/libs/libpnetcdf.la ../common/libtestutils.la
+LDADD +=  @NETCDF4_LDFLAGS@ @ADIOS_LDFLAGS@ @NETCDF4_LIBS@ @ADIOS_LIBS@ -lm
 
 if DECL_MPI_OFFSET
    # Do not add to AM_CPPFLAGS, as it will also be used by Fortran programs
@@ -100,7 +100,7 @@ NC_FILES = $(TESTPROGRAMS:%=$(TESTOUTDIR)/%.nc) \
 
 CLEANFILES = $(M4_SRCS:.m4=.c) core core.* *.gcda *.gcno *.gcov gmon.out \
              $(TESTOUTDIR)/testfile*.nc $(NC_FILES) \
-             mcoll_perf.nc.* mcoll_perf.bb.nc.*
+             $(TESTOUTDIR)/mcoll_perf.nc.* $(TESTOUTDIR)/mcoll_perf.bb.nc.*
 
 EXTRA_DIST = $(M4_SRCS) seq_runs.sh wrap_runs.sh parallel_run.sh
 

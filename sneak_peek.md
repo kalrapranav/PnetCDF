@@ -8,13 +8,7 @@ This is essentially a placeholder for the next release note ...
     Currently, the ADIOS driver does not support the low-level API.
 
 * New optimization
-  + When inserting nonblocking requests into pending queues, keep the queues
-    sorted (insert sort) in the increasing order of variable starting file
-    offsets. This can avoid a quick sort when flushing the pending requests.
-    See [pull request #37](https://github.com/Parallel-NetCDF/PnetCDF/pull/37).
-    To avoid internal sorting completely, users are recommended to post
-    nonblocking requests in the increasing order of variable IDs and
-    fixed-size variables followed by record variables.
+  + none
 
 * New Limitations
   + ADIOS driver is ready only. For more detail on limitations, please refer to /doc/README.ADIOS.md
@@ -64,22 +58,14 @@ This is essentially a placeholder for the next release note ...
     It can now be used to dump BP formated file.
 
 * Other updates:
-  + Add a check whether the MPI library is built with shared-library support.
-    If not and `--enable-shared` is used, configure process of PnetCDF will
-    fail.
-  + In NetCDF-4 driver, `nc4io_inq_var()` adds a check of arguments `no_fill`
-    and `fill_value` for NULL. If both are NULL, it skips the call to
-    `nc_inq_var_fill`.
-  + File header extent area between end of header and first variable is padded
-    with null bytes if PnetCDF is configured with option
-    `--enable-null-byte-header-padding`.
+  + none
 
 * Bug fixes
-  + Fix ncmpidiff when comparing dimension names of 2 variables between files
-    whose dimension define orders are different.
-  + Fix error checking for programs in examples/C to ignore NC_ENOTENABLED
-    if PnetCDF was not built with --enable-profiling. Thanks to Bruno Pagani
-    and see [Issue #34](https://github.com/Parallel-NetCDF/PnetCDF/issues/34).
+  + When `--enable-netcdf4` is used at configure time, users may encounter
+    problem during configure or make time, if the NetCDF4 library was built
+    with static libraries only. Thanks Bruno Pagani for reporting. This has
+    been fixed in
+    [pull request #46](https://github.com/Parallel-NetCDF/PnetCDF/pull/46).
 
 * New example programs
   + examples/adios/read_metadata.c - Dump all metadata in a ADIOS BP file.
@@ -119,10 +105,5 @@ This is essentially a placeholder for the next release note ...
   + none
 
 * Clarifications
-  + Padding -- NetCDF classic file format specification states "Header padding
-    uses null (\x00) bytes. In data, padding uses variable's fill value."
-    PnetCDF implements the header padding specification but only enforces it
-    when the configure option `--enable-null-byte-header-padding` is set. Note
-    PnetCDF has not yet implemented the padding for data section.
-
+  + none
 
