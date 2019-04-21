@@ -9,6 +9,7 @@ before_install:
   - sudo apt-get install -y gfortran
   - sudo apt-get install -y mpich2
   - sudo apt-get install -y netcdf-bin
+  - which ncdump
   - sudo apt-get install --only-upgrade autoconf
   - sudo apt-get install --only-upgrade automake
   - sudo apt-get install --only-upgrade libtool
