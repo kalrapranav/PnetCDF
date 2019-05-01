@@ -91,6 +91,12 @@ This is essentially a placeholder for the next release note ...
   + test/burst_buffer/varn.c -- to test varn API when burst buffer driver is
     used. The test includes cases when argument counts are is or some of the
     elements in counts are NULL.
+  + test/nc4/notsupport - Test if error code NC_ENOTSUPPORT is properly
+    returned when calling APIs for unsupported NetCDF-4 feature.
+  + test/nc4/rec - Test creating and reading a NetCDF-4 file with 1 unlimited
+    dimension. 
+  + test/nc4/rec2 - Test opening a NetCDF-4 file with more than 1 unlimited
+    dimensions.
 
 * Conformity with NetCDF library
   + none

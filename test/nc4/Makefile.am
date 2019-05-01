@@ -32,7 +32,12 @@ TESTPROGRAMS = simple_xy \
                interoperability_rd \
                interoperability_wr \
                noclobber \
-               tst_zero_req
+               tst_zero_req \
+               notsupport \
+               tst_rec_vars \
+               tst_2_rec_dims \
+               tst_get_put_size \
+               pres_temp_4D
 
 M4_SRCS  = put_get_all_kinds.m4 interoperability_rd.m4 interoperability_wr.m4
 

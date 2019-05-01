@@ -96,6 +96,8 @@ nc4io_create(MPI_Comm     comm,
     nc4p->ncid = ncid;
     nc4p->comm = comm;
     nc4p->ncid = ncidtmp;
+    nc4p->putsize = 0;
+    nc4p->getsize = 0;
     if (info == MPI_INFO_NULL)
         nc4p->mpiinfo = MPI_INFO_NULL;
     else
@@ -148,6 +150,8 @@ nc4io_open(MPI_Comm     comm,
     nc4p->ncid = ncid;
     nc4p->comm = comm;
     nc4p->ncid = ncidtmp;
+    nc4p->putsize = 0;
+    nc4p->getsize = 0;
     if (info == MPI_INFO_NULL)
         nc4p->mpiinfo = MPI_INFO_NULL;
     else
@@ -366,14 +370,30 @@ nc4io_inq_misc(void       *ncdp,
      * the first one is considered as record dim here
      */
     if (num_fix_varsp != NULL || num_rec_varsp != NULL || recsize != NULL) {
-        int nvar, ndim, *dims, *vars, unlimdim, nrec=0, nfix=0;
+        int nvar, ndim, *dims, *vars, nrecdim, *isrec, *recdims, nrec=0, nfix=0;
 
         /* Record dimid (TODO: non-classic model NetCDF4 file may have more
-         * than one unlimited dimension) */
-        err = nc_inq_unlimdim(nc4p->ncid, &unlimdim);
+         * than one unlimited dimension) 
+         * We flag each dimension that is reported as unlimited dimension
+         */
+        err = nc_inq(nc4p->ncid, &ndim, NULL, NULL, NULL);
+        if (err != NC_NOERR) DEBUG_RETURN_ERROR(err);
+        isrec = (int*)NCI_Malloc(SIZEOF_INT * ndim);
+        memset(isrec, 0, SIZEOF_INT * ndim);
+
+        /* Get list of unlimited dim */
+        err = nc_inq_unlimdims(nc4p->ncid, &nrecdim, NULL);
+        if (err != NC_NOERR) DEBUG_RETURN_ERROR(err)
+        recdims = (int*)NCI_Malloc(SIZEOF_INT * nrecdim);
+        err = nc_inq_unlimdims(nc4p->ncid, NULL, recdims);
         if (err != NC_NOERR) DEBUG_RETURN_ERROR(err)
 
-        /* numner of variables */
+        /* Set up the flag */
+        for(i = 0; i < nrecdim; i++){
+            isrec[recdims[i]] = 1;
+        }
+
+        /* number of variables */
         err = nc_inq_varids(nc4p->ncid, &nvar, NULL);
         if (err != NC_NOERR) DEBUG_RETURN_ERROR(err)
 
@@ -384,6 +404,8 @@ nc4io_inq_misc(void       *ncdp,
         err = nc_inq_varids(nc4p->ncid, NULL, vars);
         if (err != NC_NOERR) {
             NCI_Free(vars);
+            NCI_Free(recdims);
+            NCI_Free(isrec);
             DEBUG_RETURN_ERROR(err)
         }
 
@@ -403,12 +425,14 @@ nc4io_inq_misc(void       *ncdp,
             if (err != NC_NOERR) {
                 NCI_Free(vars);
                 NCI_Free(dims);
+                NCI_Free(recdims);
+                NCI_Free(isrec);
                 DEBUG_RETURN_ERROR(err)
             }
 
             /* Iterate through all dimensions */
             for (j=0; j<ndim; j++)
-                if (dims[j] == unlimdim)
+                if (isrec[dims[j]])
                     break;
             /* If none of the dimension is record dim, count as fixed var */
             if (j == ndim) nfix += 1;
@@ -429,6 +453,8 @@ nc4io_inq_misc(void       *ncdp,
             if (err != NC_NOERR) {
                 NCI_Free(vars);
                 NCI_Free(dims);
+                NCI_Free(recdims);
+                NCI_Free(isrec);
                 DEBUG_RETURN_ERROR(err)
             }
             /* size of variable external data type */
@@ -436,16 +462,20 @@ nc4io_inq_misc(void       *ncdp,
             if (err != NC_NOERR) {
                 NCI_Free(vars);
                 NCI_Free(dims);
+                NCI_Free(recdims);
+                NCI_Free(isrec);
                 DEBUG_RETURN_ERROR(err)
             }
             var_size = xtype_size;
             for (j=0; j<ndim; j++) {
                 size_t dim_size;
-                if (dims[j] == unlimdim) continue;
+                if (isrec[dims[j]]) continue;
                 err = nc_inq_dimlen(nc4p->ncid, dims[j], &dim_size);
                 if (err != NC_NOERR) {
                     NCI_Free(vars);
                     NCI_Free(dims);
+                    NCI_Free(recdims);
+                    NCI_Free(isrec);
                     DEBUG_RETURN_ERROR(err)
                 }
                 var_size *= dim_size;
@@ -455,33 +485,39 @@ nc4io_inq_misc(void       *ncdp,
             NCI_Free(dims);
         }
         NCI_Free(vars);
+        NCI_Free(recdims);
+        NCI_Free(isrec);
 
         if (num_fix_varsp != NULL) *num_fix_varsp = nfix;
         if (num_rec_varsp != NULL) *num_rec_varsp = nrec;
     }
 
     /* NetCDF does not expose any MPI related info */
-    if (striping_size  != NULL) *striping_size = 0;
-    if (striping_count != NULL) *striping_count = 0;
+    if (striping_size  != NULL) DEBUG_RETURN_ERROR(NC_ENOTSUPPORT);
+    if (striping_count != NULL) DEBUG_RETURN_ERROR(NC_ENOTSUPPORT);
 
-    /* Read only */
-    if (put_size != NULL) *put_size = 0;
+    /* Put size counted by the driver */
+    if (put_size != NULL){
+        *put_size = nc4p->putsize;
+    }
 
-    /* TODO: Calculate get size */
-    if (get_size != NULL) *get_size = 0;
+    /* Get size counted by the driver */
+    if (get_size != NULL){
+        *get_size = nc4p->getsize;
+    }
 
     /* NetCDF does not expose such info */
-    if (header_size   != NULL) *header_size = 0;
-    if (header_extent != NULL) *header_extent = 0;
+    if (header_size   != NULL) DEBUG_RETURN_ERROR(NC_ENOTSUPPORT);
+    if (header_extent != NULL) DEBUG_RETURN_ERROR(NC_ENOTSUPPORT);
 
     /* TODO: suporting nonblocking IO */
-    if (nreqs != NULL) *nreqs = 0;
+    if (nreqs != NULL) DEBUG_RETURN_ERROR(NC_ENOTSUPPORT);
 
-    /* We don't use user buffer */
-    if (usage != NULL) *usage = 0;
+    /* bput APIs are not supported yet */
+    if (usage != NULL) DEBUG_RETURN_ERROR(NC_ENOTSUPPORT);
 
-    /* We don't use user buffer */
-    if (buf_size != NULL) *buf_size = 0;
+    /* bput APIs are not supported yet */
+    if (buf_size != NULL) DEBUG_RETURN_ERROR(NC_ENOTSUPPORT);
 
     return NC_NOERR;
 }
@@ -492,7 +528,7 @@ nc4io_cancel(void *ncdp,
              int  *req_ids,
              int  *statuses)
 {
-    /* We do not support nonblocking I/O so far */
+    /* We do not support nonblocking I/O yet */
     DEBUG_RETURN_ERROR(NC_ENOTSUPPORT);
 }
 
@@ -503,7 +539,7 @@ nc4io_wait(void *ncdp,
            int  *statuses,
            int   reqMode)
 {
-    /* We do not support nonblocking I/O so far */
+    /* We do not support nonblocking I/O yet */
     DEBUG_RETURN_ERROR(NC_ENOTSUPPORT);
 }
 
@@ -574,7 +610,6 @@ nc4io_sync(void *ncdp)
 int
 nc4io_flush(void *ncdp)
 {
-    // NetCDF does not have flush
     DEBUG_RETURN_ERROR(NC_ENOTSUPPORT)
 }
 
